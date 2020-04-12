@@ -8,6 +8,7 @@
 
 #import "ViewController.h"
 #import "YSAVViewController.h"
+#import "YSLiveListViewController.h"
 
 @interface ViewController () <UITableViewDataSource, UITableViewDelegate>
 
@@ -21,6 +22,7 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    self.title = @"ijkplayer";
     self.dataArray = @[
         @{@"title": @"播放本地视频", @"url": @""},
         @{@"title": @"播放远程视频", @"url": @""},
@@ -63,7 +65,10 @@
             break;
         case 2:
         {
-            url = [NSURL URLWithString:@"http://www.yizhibo.com/l/d-HWY0N2G35yDkYn.html?p_from=Phome_NewAnchor"];
+            YSLiveListViewController *liveListVC = [[UIStoryboard storyboardWithName:@"Main" bundle:nil] instantiateViewControllerWithIdentifier:@"YSLiveListViewController"];
+            [self.navigationController pushViewController:liveListVC animated:YES];
+            return;
+//            url = [NSURL URLWithString:@"http://wssource.rtc.inke.cn/live/1586655095386422.flv?codecInfo=8192&dpSrc=6&ikChorus=1&ikDnsOp=1&ikHost=ws&ikLiveType=normal&ikLog=1&ikOp=0&ikSyncBeta=1&md5sum=3e2d&msUid=450515766&pushHost=clsTrans.push.cls.inke.cn"];
         }
             break;
         default:
