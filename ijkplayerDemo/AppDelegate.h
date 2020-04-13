@@ -10,6 +10,7 @@
 
 @interface AppDelegate : UIResponder <UIApplicationDelegate>
 
+@property (assign, nonatomic) BOOL fullScreen;
 
 @end
 

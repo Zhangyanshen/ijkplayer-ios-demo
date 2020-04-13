@@ -68,14 +68,13 @@
             YSLiveListViewController *liveListVC = [[UIStoryboard storyboardWithName:@"Main" bundle:nil] instantiateViewControllerWithIdentifier:@"YSLiveListViewController"];
             [self.navigationController pushViewController:liveListVC animated:YES];
             return;
-//            url = [NSURL URLWithString:@"http://wssource.rtc.inke.cn/live/1586655095386422.flv?codecInfo=8192&dpSrc=6&ikChorus=1&ikDnsOp=1&ikHost=ws&ikLiveType=normal&ikLog=1&ikOp=0&ikSyncBeta=1&md5sum=3e2d&msUid=450515766&pushHost=clsTrans.push.cls.inke.cn"];
         }
             break;
         default:
             break;
     }
     YSAVViewController *avVC = [[YSAVViewController alloc] init];
-//    avVC.modalPresentationStyle = UIModalPresentationFullScreen;
+    avVC.modalPresentationStyle = UIModalPresentationFullScreen;
     avVC.fileURL = url;
     [self presentViewController:avVC animated:YES completion:^{
         
