@@ -23,10 +23,19 @@
                                 <action selector="doneBtnClick:" destination="iN0-l3-epB" eventType="touchUpInside" id="eNs-xc-dnp"/>
                             </connections>
                         </button>
+                        <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Jax-Xn-jiT">
+                            <rect key="frame" x="848" y="8" width="32" height="34"/>
+                            <state key="normal" title="1.0x"/>
+                            <connections>
+                                <action selector="playSpeedChanged:" destination="iN0-l3-epB" eventType="touchUpInside" id="Y8f-Nh-xNR"/>
+                            </connections>
+                        </button>
                     </subviews>
                     <color key="backgroundColor" red="0.0" green="0.0" blue="0.0" alpha="0.5" colorSpace="calibratedRGB"/>
                     <constraints>
                         <constraint firstItem="Pya-02-iEJ" firstAttribute="centerY" secondItem="mz9-zX-8mK" secondAttribute="centerY" id="5vm-hg-Kdd"/>
+                        <constraint firstItem="Jax-Xn-jiT" firstAttribute="centerY" secondItem="mz9-zX-8mK" secondAttribute="centerY" id="6o5-As-Qwp"/>
+                        <constraint firstAttribute="trailing" secondItem="Jax-Xn-jiT" secondAttribute="trailing" constant="16" id="Cak-zu-qGu"/>
                         <constraint firstAttribute="height" constant="50" id="VJN-zM-8kz"/>
                         <constraint firstItem="Pya-02-iEJ" firstAttribute="leading" secondItem="mz9-zX-8mK" secondAttribute="leading" constant="16" id="yvR-an-Vbb"/>
                     </constraints>

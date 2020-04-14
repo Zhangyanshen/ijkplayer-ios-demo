@@ -160,3 +160,29 @@ ijkplayer默认不支持https，如果需要支持则需要添加上面生成的
 
 * `VideoToolbox.framework`
 
+## 四、常用功能
+
+### 1.当前播放时间
+
+```objective-c
+@property (nonatomic) NSTimeInterval currentPlaybackTime;
+```
+
+### 2.总时长
+
+```objective-c
+@property(nonatomic, readonly)  NSTimeInterval duration;
+```
+
+### 3.已经缓存的时长
+
+```objective-c
+@property(nonatomic, readonly)  NSTimeInterval playableDuration;
+```
+
+### 3.倍速播放
+
+```objective-c
+@property (nonatomic) float playbackRate
+```
+

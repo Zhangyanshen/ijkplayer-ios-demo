@@ -18,6 +18,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)done;
 
 /**
+ 倍速播放
+ */
+- (void)setPlaybackRate:(CGFloat)playbackRate;
+
+/**
  播放按钮点击
  */
 - (void)play;

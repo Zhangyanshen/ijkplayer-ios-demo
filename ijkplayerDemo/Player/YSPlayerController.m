@@ -28,6 +28,7 @@
         [options setPlayerOptionIntValue:1 forKey:@"framedrop"];
         self.player = [[IJKFFMoviePlayerController alloc] initWithContentURL:contentURL withOptions:options];
         self.player.scalingMode = IJKMPMovieScalingModeAspectFit;
+        self.player.playbackRate = 1.0;
         [self.playerView insertSubview:self.player.view atIndex:0];
         // 添加约束
         [self addContraints];
@@ -94,6 +95,10 @@
     }
     [self.player setCurrentPlaybackTime:currentPlaybackTime];
     [self progressChangeEnd];
+}
+
+- (void)setPlaybackRate:(CGFloat)playbackRate {
+    self.player.playbackRate = playbackRate;
 }
 
 #pragma mark - Event response

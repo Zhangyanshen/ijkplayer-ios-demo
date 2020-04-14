@@ -18,6 +18,13 @@ typedef NS_ENUM(NSUInteger, YSPanDirection) {
     YSPanDirectionVertical
 };
 
+typedef NS_ENUM(NSUInteger, YSPlaybackRate) {
+    YSPlaybackRateHalf = 0,
+    YSPlaybackRateNormal,
+    YSPlaybackRateOneAndHalf,
+    YSPlaybackRateTwo
+};
+
 @interface YSPlayerControl () <UIGestureRecognizerDelegate>
 
 @property (weak, nonatomic) IBOutlet UIView *navBar;
@@ -37,6 +44,7 @@ typedef NS_ENUM(NSUInteger, YSPanDirection) {
 @property (strong, nonatomic) NSTimer *timer;
 
 @property (assign, nonatomic) YSPanDirection direction;
+@property (assign, nonatomic) YSPlaybackRate playbackRate;
 
 @end
 
@@ -49,6 +57,7 @@ typedef NS_ENUM(NSUInteger, YSPanDirection) {
 
 - (void)awakeFromNib {
     [super awakeFromNib];
+    self.playbackRate = YSPlaybackRateNormal;
     self.hideBar = NO;
     self.clipsToBounds = YES;
     // 添加触摸手势
@@ -137,6 +146,19 @@ typedef NS_ENUM(NSUInteger, YSPanDirection) {
     [self resetTimer];
     if ([self.delegate respondsToSelector:@selector(done)]) {
         [self.delegate done];
+    }
+}
+
+- (IBAction)playSpeedChanged:(UIButton *)sender {
+    [self resetTimer];
+    static CGFloat rate = 1.0;
+    if ([self.delegate respondsToSelector:@selector(setPlaybackRate:)]) {
+        rate += 0.5;
+        if (rate > 2.0) {
+            rate = 0.5;
+        }
+        [sender setTitle:[NSString stringWithFormat:@"%.1lfx", rate] forState:UIControlStateNormal];
+        [self.delegate setPlaybackRate:rate];
     }
 }
 
