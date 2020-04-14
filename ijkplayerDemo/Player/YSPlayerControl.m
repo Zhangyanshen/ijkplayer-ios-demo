@@ -7,9 +7,16 @@
 //
 
 #import "YSPlayerControl.h"
+#import <MediaPlayer/MediaPlayer.h>
 
 #define NAV_BAR_HEIGHT 50
 #define TOOL_BAR_HEIGHT 50
+
+typedef NS_ENUM(NSUInteger, YSPanDirection) {
+    YSPanDirectionUnknow = 0,
+    YSPanDirectionHorizontal,
+    YSPanDirectionVertical
+};
 
 @interface YSPlayerControl () <UIGestureRecognizerDelegate>
 
@@ -29,6 +36,8 @@
 @property (assign, nonatomic, getter=isHideBar) BOOL hideBar;
 @property (strong, nonatomic) NSTimer *timer;
 
+@property (assign, nonatomic) YSPanDirection direction;
+
 @end
 
 @implementation YSPlayerControl
@@ -44,6 +53,8 @@
     self.clipsToBounds = YES;
     // 添加触摸手势
     [self addTapGesture];
+    // 添加滑动手势
+    [self addPanGesture];
     // 开启timer
     [self resetTimer];
 }
@@ -60,8 +71,66 @@
 
 #pragma mark - Event response
 
-- (void)handleTapGesture:(UITapGestureRecognizer *)tap {
+- (void)handleSingleTapGesture:(UITapGestureRecognizer *)tap {
     [self toggleBar];
+}
+
+- (void)handleDoubleTapGesture:(UITapGestureRecognizer *)tap {
+    [self resetTimer];
+    if ([self.delegate respondsToSelector:@selector(play)]) {
+        [self.delegate play];
+    }
+}
+
+- (void)handlePanGesture:(UIPanGestureRecognizer *)pan {
+    
+    CGFloat startX = [pan locationInView:pan.view].x;
+    
+    switch (pan.state) {
+        case UIGestureRecognizerStateBegan:
+        {
+            self.direction = YSPanDirectionUnknow;
+            NSLog(@"深哥：start：%@", NSStringFromCGPoint([pan locationInView:pan.view]));
+        }
+            break;
+        case UIGestureRecognizerStateChanged:
+        {
+            NSLog(@"深哥：changed：%@", NSStringFromCGPoint([pan locationInView:pan.view]));
+            CGPoint translation = [pan translationInView:pan.view];
+            CGFloat absX = fabs(translation.x);
+            CGFloat absY = fabs(translation.y);
+            if (MAX(absX, absY) < 10) {
+                return;
+            }
+            if (absX > absY) { // 水平
+                self.direction = YSPanDirectionHorizontal;
+                CGFloat deltaX = [pan velocityInView:pan.view].x;
+                BOOL forward = YES;
+                if (translation.x < 0) { // 后退
+                    forward = NO;
+                }
+                if ([self.delegate respondsToSelector:@selector(seekToProgress:forward:)]) {
+                    [self.delegate seekToProgress:fabs(deltaX / self.bounds.size.width / 100.0) forward:forward];
+                }
+            } else if (absY > absX) { // 垂直
+                self.direction = YSPanDirectionVertical;
+                CGPoint velocity = [pan velocityInView:pan.view];
+                if (startX <= self.bounds.size.width * 0.5) {
+                    [self changeBrightness:velocity.y];
+                } else {
+                    [self changeVolume:velocity.y];
+                }
+            }
+        }
+            break;
+        case UIGestureRecognizerStateEnded:
+        {
+            NSLog(@"深哥：end：%@", NSStringFromCGPoint([pan locationInView:pan.view]));
+        }
+            break;
+        default:
+            break;
+    }
 }
 
 - (IBAction)doneBtnClick:(UIButton *)sender {
@@ -137,11 +206,52 @@
 #pragma mark - Private methods
 
 - (void)addTapGesture {
-    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTapGesture:)];
-    tap.delegate = self;
-    [self addGestureRecognizer:tap];
+    // 单击手势
+    UITapGestureRecognizer *singleTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleSingleTapGesture:)];
+    singleTap.delegate = self;
+    [self addGestureRecognizer:singleTap];
+    // 双击手势
+    UITapGestureRecognizer *doubleTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleDoubleTapGesture:)];
+    doubleTap.numberOfTapsRequired = 2;
+    [self addGestureRecognizer:doubleTap];
+    // 解决双击手势和单击手势冲突
+    [singleTap requireGestureRecognizerToFail:doubleTap];
 }
 
+- (void)addPanGesture {
+    UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePanGesture:)];
+    pan.delegate = self;
+    [self addGestureRecognizer:pan];
+}
+
+// 改变屏幕亮度
+- (void)changeBrightness:(CGFloat)deltaY {
+    CGFloat brightness = [UIScreen mainScreen].brightness;
+    brightness -= deltaY / 10000.0;
+    if (brightness > 1.0) {
+        brightness = 1.0;
+    }
+    if (brightness < 0.0) {
+        brightness = 0.0;
+    }
+    [UIScreen mainScreen].brightness = brightness;
+}
+
+// 改变系统音量
+- (void)changeVolume:(CGFloat)deltaY {
+    MPMusicPlayerController *playerController = [MPMusicPlayerController applicationMusicPlayer];
+    float volume = playerController.volume;
+    volume -= deltaY / 10000.0;
+    if (volume > 1.0) {
+        volume = 1.0;
+    }
+    if (volume < 0.0) {
+        volume = 0.0;
+    }
+    playerController.volume = volume;
+}
+
+// 隐藏或显示toolBar和navBar
 - (void)toggleBar {
     self.hideBar = !self.isHideBar;
     self.navBarTopConstraint.constant = self.hideBar ? -NAV_BAR_HEIGHT : 0;
@@ -158,12 +268,14 @@
     }
 }
 
+// 格式化时间
 - (NSString *)formatTime:(NSInteger)time {
     NSInteger minutes = time / 60;
     NSInteger seconds = time % 60;
     return [NSString stringWithFormat:@"%02ld:%02ld", minutes, seconds];
 }
 
+// 重置timer
 - (void)resetTimer {
     [self invalidTimer];
     __weak typeof(self) weakSelf = self;
@@ -173,6 +285,7 @@
     [[NSRunLoop currentRunLoop] addTimer:self.timer forMode:NSRunLoopCommonModes];
 }
 
+// 让timer失效
 - (void)invalidTimer {
     if (self.timer) {
         [self.timer invalidate];

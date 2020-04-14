@@ -84,6 +84,18 @@
     }
 }
 
+- (void)seekToProgress:(CGFloat)progress forward:(BOOL)forward {
+    [self progressChangeStart];
+    NSTimeInterval currentPlaybackTime = self.player.currentPlaybackTime;
+    if (forward) {
+        currentPlaybackTime += self.player.duration * progress;
+    } else {
+        currentPlaybackTime -= self.player.duration * progress;
+    }
+    [self.player setCurrentPlaybackTime:currentPlaybackTime];
+    [self progressChangeEnd];
+}
+
 #pragma mark - Event response
 
 - (void)handleLoadStateDidChangeNotification:(NSNotification *)notification {

@@ -42,6 +42,11 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (void)fullScreen;
 
+/**
+ 快进或快退
+ */
+- (void)seekToProgress:(CGFloat)progress forward:(BOOL)forward;
+
 @end
 
 NS_ASSUME_NONNULL_END
