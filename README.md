@@ -283,5 +283,122 @@ for (UIView *view in mpVolumeView.subviews) {
   }
   ```
 
+### 5.手势控制播放进度、系统音量及屏幕亮度
+
+
+
+### 6.获取运营商信息
+
+* 添加 `CoreTelephony.framework` ；
+
+  <img src="/Users/zhangyanshen/Library/Application Support/typora-user-images/image-20200415211713861.png" alt="image-20200415211713861" style="zoom:50%;" />
+
+* 导入头文件；
+
+  ```objective-c
+  #import <CoreTelephony/CTTelephonyNetworkInfo.h>
+  #import <CoreTelephony/CTCarrier.h>
+  ```
+
+* 获取并监听运营商信息；
+
+  ```objective-c
+  ...
+  @property (strong, nonatomic) CTTelephonyNetworkInfo *networkInfo;  
+  ...
   
+  // 加载运营商信息
+  - (void)loadCarrier {
+      NSDictionary *carrierDic = [self.networkInfo serviceSubscriberCellularProviders];
+    	// 首次加载并不会走监听，所以这里要手动获取一下
+      [self updateCarrierInfo:carrierDic[self.networkInfo.dataServiceIdentifier]];
+      __weak typeof(self) weakSelf = self;
+      // 监听运营商变化
+      self.networkInfo.serviceSubscriberCellularProvidersDidUpdateNotifier = ^(NSString * _Nonnull dataServiceIdentifier) {
+          CTCarrier *carrier = carrierDic[dataServiceIdentifier];
+          [weakSelf updateCarrierInfo:carrier];
+      };
+  }
+  
+  // 更新运营商信息
+  - (void)updateCarrierInfo:(CTCarrier *)carrier {
+      NSString *carrierName;
+      if (!carrier.isoCountryCode) {
+          carrierName = @"无SIM卡";
+      } else {
+          carrierName = carrier.carrierName;
+      }
+      self.carrierLbl.text = carrierName;
+  }
+  ```
+
+### 7.获取电池状态和电量
+
+* 要获取电池电量和电池状态，首先必须开启电池监测，即需要添加下面一行代码；
+
+  ```objective-c
+  // 开启电池监测
+  [UIDevice currentDevice].batteryMonitoringEnabled = YES;
+  ```
+
+* 电池状态
+
+  * 添加通知 `UIDeviceBatteryStateDidChangeNotification` ；
+
+    ```objective-c
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleBatteryStateDidChangeNotification:) name:UIDeviceBatteryStateDidChangeNotification object:nil];
+    ```
+
+  * 通过 `UIDevice` 的 `batteryState` 属性获取电池状态；
+
+    ```objective-c
+    UIDeviceBatteryState batteryState = [UIDevice currentDevice].batteryState;
+    switch (batteryState) {
+        case UIDeviceBatteryStateCharging: // 正在充电(<100%)
+        {
+            self.batteryStateLbl.text = @"充电中";
+        }
+            break;
+        case UIDeviceBatteryStateFull: // 正在充电(100%)
+        {
+            self.batteryStateLbl.text = @"已充满";
+        }
+            break;
+        case UIDeviceBatteryStateUnplugged:
+        {
+            self.batteryStateLbl.text = @"未充电";
+        }
+            break;
+        case UIDeviceBatteryStateUnknown:
+        {
+            self.batteryStateLbl.text = @"未知";
+        }
+            break;
+        default:
+            break;
+    }
+    ```
+
+* 电池电量
+
+  * 添加通知 `UIDeviceBatteryLevelDidChangeNotification` ；
+
+    ```objective-c
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleBatteryLevelDidChangeNotification:) name:UIDeviceBatteryLevelDidChangeNotification object:nil];
+    ```
+
+  * 通过 `UIDevice` 的 `batteryLevel` 属性获取电池电量；
+
+    ```objective-c
+    float batteryLevel = [UIDevice currentDevice].batteryLevel;
+    if (batteryLevel < 0.0) {
+        self.batteryLevelLbl.text = @"0%";
+    } else {
+        self.batteryLevelLbl.text = [NSString stringWithFormat:@"%.0f%%", batteryLevel * 100];
+    }
+    ```
+
+  > **注意：**获取电池状态和电量在首次加载时并不会走监听方法，所以在刚启动时，需要先手动获取一下。
+
+### 8.获取网络信息
 

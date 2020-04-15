@@ -8,6 +8,8 @@
 
 #import "YSPlayerControl.h"
 #import <MediaPlayer/MediaPlayer.h>
+#import <CoreTelephony/CTTelephonyNetworkInfo.h>
+#import <CoreTelephony/CTCarrier.h>
 
 #define NAV_BAR_HEIGHT 50
 #define TOOL_BAR_HEIGHT 50
@@ -22,10 +24,29 @@ typedef NS_ENUM(NSUInteger, YSPanDirection) {
 
 @property (weak, nonatomic) IBOutlet UIView *navBar;
 @property (weak, nonatomic) IBOutlet UIView *toolBar;
+
+@property (weak, nonatomic) IBOutlet NSLayoutConstraint *navBarTopConstraint;
+@property (weak, nonatomic) IBOutlet NSLayoutConstraint *toolBarBottomConstraint;
+
+/*
+ status bar
+ */
+@property (weak, nonatomic) IBOutlet UIView *statusBar;
+@property (weak, nonatomic) IBOutlet UILabel *carrierLbl; // 运营商
+@property (weak, nonatomic) IBOutlet UILabel *timeLbl; // 时间
+@property (weak, nonatomic) IBOutlet UILabel *batteryStateLbl; // 电池状态
+@property (weak, nonatomic) IBOutlet UILabel *batteryLevelLbl; // 电量
+
+/*
+ 自定义音量和亮度view
+ */
 @property (weak, nonatomic) IBOutlet UIView *volumeView;
 @property (weak, nonatomic) IBOutlet UIProgressView *volumeProgressView;
 @property (weak, nonatomic) IBOutlet UILabel *volumeTipLbl;
 
+/*
+ 视频操作相关按钮
+ */
 @property (weak, nonatomic) IBOutlet UIButton *playBtn;
 @property (weak, nonatomic) IBOutlet UILabel *playTimeLbl;
 @property (weak, nonatomic) IBOutlet UILabel *totalTimeLbl;
@@ -33,16 +54,15 @@ typedef NS_ENUM(NSUInteger, YSPanDirection) {
 @property (weak, nonatomic) IBOutlet UIButton *fullScreenBtn;
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *activityIndicatorView;
 
-@property (weak, nonatomic) IBOutlet NSLayoutConstraint *navBarTopConstraint;
-@property (weak, nonatomic) IBOutlet NSLayoutConstraint *toolBarBottomConstraint;
-
 @property (assign, nonatomic, getter=isHideBar) BOOL hideBar;
 @property (strong, nonatomic) NSTimer *timer;
+@property (strong, nonatomic) NSTimer *timeTimer; // 时间计时器
 
 @property (assign, nonatomic) YSPanDirection direction;
 @property (nonatomic, assign) BOOL isVolume;/*!*是否在调节音量*/
 
 @property (strong, nonatomic) UISlider *volumeSlider;
+@property (strong, nonatomic) CTTelephonyNetworkInfo *networkInfo;
 
 @end
 
@@ -58,6 +78,8 @@ typedef NS_ENUM(NSUInteger, YSPanDirection) {
     self.direction = YSPanDirectionUnknown;
     self.hideBar = NO;
     self.clipsToBounds = YES;
+    // 开启电池监测
+    [UIDevice currentDevice].batteryMonitoringEnabled = YES;
     // 音量、亮度view
     self.volumeView.layer.cornerRadius = 5;
     // 添加触摸手势
@@ -66,6 +88,16 @@ typedef NS_ENUM(NSUInteger, YSPanDirection) {
     [self addPanGesture];
     // 开启timer
     [self resetTimer];
+    // 添加通知
+    [self addNotifications];
+    // 获取运营商
+    [self loadCarrier];
+    // 获取电池状态
+    [self loadBatteryState];
+    // 获取电池电量
+    [self loadBatteryLevel];
+    // 开启获取系统时间timer
+    [self startTimeTimer];
     
     MPVolumeView *mpVolumeView = [[MPVolumeView alloc] initWithFrame:CGRectMake(-30, -30, 0, 0)];
 //    mpVolumeView.showsRouteButton = NO; // 是否显示AirPlay按钮
@@ -290,7 +322,22 @@ typedef NS_ENUM(NSUInteger, YSPanDirection) {
     }
 }
 
+- (void)handleBatteryStateDidChangeNotification:(NSNotification *)notification {
+    [self loadBatteryState];
+}
+
+- (void)handleBatteryLevelDidChangeNotification:(NSNotification *)notification {
+    [self loadBatteryLevel];
+}
+
 #pragma mark - Setters/Getters
+
+- (CTTelephonyNetworkInfo *)networkInfo {
+    if (!_networkInfo) {
+        _networkInfo = [[CTTelephonyNetworkInfo alloc] init];
+    }
+    return _networkInfo;
+}
 
 - (void)setPlaying:(BOOL)playing {
     _playing = playing;
@@ -302,6 +349,7 @@ typedef NS_ENUM(NSUInteger, YSPanDirection) {
     _fullScreen = fullScreen;
     NSString *img = fullScreen ? @"player-small-screen" : @"player-full-screen";
     [self.fullScreenBtn setImage:[UIImage imageNamed:img] forState:UIControlStateNormal];
+    self.statusBar.hidden = fullScreen ? NO : YES;
 }
 
 - (void)setPrepareToPlay:(BOOL)prepareToPlay {
@@ -314,6 +362,19 @@ typedef NS_ENUM(NSUInteger, YSPanDirection) {
 }
 
 #pragma mark - Private methods
+
+// 添加通知
+- (void)addNotifications {
+    // 电池状态
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleBatteryStateDidChangeNotification:) name:UIDeviceBatteryStateDidChangeNotification object:nil];
+    // 电池电量
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleBatteryLevelDidChangeNotification:) name:UIDeviceBatteryLevelDidChangeNotification object:nil];
+}
+
+// 移除通知
+- (void)removeNotifications {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
 
 - (void)addTapGesture {
     // 单击手势
@@ -332,6 +393,68 @@ typedef NS_ENUM(NSUInteger, YSPanDirection) {
     UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePanGesture:)];
     pan.delegate = self;
     [self addGestureRecognizer:pan];
+}
+
+// 加载运营商信息
+- (void)loadCarrier {
+    NSDictionary *carrierDic = [self.networkInfo serviceSubscriberCellularProviders];
+    [self updateCarrierInfo:carrierDic[self.networkInfo.dataServiceIdentifier]];
+    __weak typeof(self) weakSelf = self;
+    // 监听运营商变化
+    self.networkInfo.serviceSubscriberCellularProvidersDidUpdateNotifier = ^(NSString * _Nonnull dataServiceIdentifier) {
+        CTCarrier *carrier = carrierDic[dataServiceIdentifier];
+        [weakSelf updateCarrierInfo:carrier];
+    };
+}
+
+// 更新运营商信息
+- (void)updateCarrierInfo:(CTCarrier *)carrier {
+    NSString *carrierName;
+    if (!carrier.isoCountryCode) {
+        carrierName = @"无SIM卡";
+    } else {
+        carrierName = carrier.carrierName;
+    }
+    self.carrierLbl.text = carrierName;
+}
+
+// 初始化电量
+- (void)loadBatteryLevel {
+    float batteryLevel = [UIDevice currentDevice].batteryLevel;
+    if (batteryLevel < 0.0) {
+        self.batteryLevelLbl.text = @"0%";
+    } else {
+        self.batteryLevelLbl.text = [NSString stringWithFormat:@"%.0f%%", batteryLevel * 100];
+    }
+}
+
+// 初始化电池状态
+- (void)loadBatteryState {
+    UIDeviceBatteryState batteryState = [UIDevice currentDevice].batteryState;
+    switch (batteryState) {
+        case UIDeviceBatteryStateCharging: // 正在充电(<100%)
+        {
+            self.batteryStateLbl.text = @"充电中";
+        }
+            break;
+        case UIDeviceBatteryStateFull: // 正在充电(100%)
+        {
+            self.batteryStateLbl.text = @"已充满";
+        }
+            break;
+        case UIDeviceBatteryStateUnplugged:
+        {
+            self.batteryStateLbl.text = @"未充电";
+        }
+            break;
+        case UIDeviceBatteryStateUnknown:
+        {
+            self.batteryStateLbl.text = @"未知";
+        }
+            break;
+        default:
+            break;
+    }
 }
 
 // 初始化屏幕亮度
@@ -417,6 +540,32 @@ typedef NS_ENUM(NSUInteger, YSPanDirection) {
         [self.timer invalidate];
         self.timer = nil;
     }
+}
+
+- (void)startTimeTimer {
+    __weak typeof(self) weakSelf = self;
+    self.timeTimer = [NSTimer timerWithTimeInterval:1 repeats:YES block:^(NSTimer * _Nonnull timer) {
+        NSDate *date = [NSDate date];
+        NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+        formatter.dateFormat = @"HH:mm";
+        weakSelf.timeLbl.text = [formatter stringFromDate:date];
+    }];
+    [[NSRunLoop currentRunLoop] addTimer:self.timeTimer forMode:NSRunLoopCommonModes];
+}
+
+- (void)invalidTimeTimer {
+    if (self.timeTimer) {
+        [self.timeTimer invalidate];
+        self.timeTimer = nil;
+    }
+}
+
+#pragma mark - dealloc
+
+- (void)dealloc {
+    [self removeNotifications];
+    [self invalidTimer];
+    [self invalidTimeTimer];
 }
 
 @end

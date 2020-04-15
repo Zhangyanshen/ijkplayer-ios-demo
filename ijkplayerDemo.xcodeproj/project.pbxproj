@@ -117,6 +117,7 @@
 		23C7AC0C244455E000F3C411 /* MASConstraint.m in Sources */ = {isa = PBXBuildFile; fileRef = 23C7AC00244455E000F3C411 /* MASConstraint.m */; };
 		23C7AC0D244455E000F3C411 /* MASViewConstraint.m in Sources */ = {isa = PBXBuildFile; fileRef = 23C7AC02244455E000F3C411 /* MASViewConstraint.m */; };
 		23C7AC0E244455E000F3C411 /* MASViewAttribute.m in Sources */ = {isa = PBXBuildFile; fileRef = 23C7AC03244455E000F3C411 /* MASViewAttribute.m */; };
+		23C7AC132447377E00F3C411 /* CoreTelephony.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 23C7AC122447377E00F3C411 /* CoreTelephony.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -353,6 +354,7 @@
 		23C7AC02244455E000F3C411 /* MASViewConstraint.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MASViewConstraint.m; sourceTree = "<group>"; };
 		23C7AC03244455E000F3C411 /* MASViewAttribute.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MASViewAttribute.m; sourceTree = "<group>"; };
 		23C7AC1024445E1000F3C411 /* YSPlayerControlProtocol.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = YSPlayerControlProtocol.h; sourceTree = "<group>"; };
+		23C7AC122447377E00F3C411 /* CoreTelephony.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreTelephony.framework; path = System/Library/Frameworks/CoreTelephony.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -367,6 +369,7 @@
 				232BF5002441A87000017F10 /* MobileCoreServices.framework in Frameworks */,
 				232BF4FE2441A86700017F10 /* MediaPlayer.framework in Frameworks */,
 				232BF4FC2441A85E00017F10 /* libz.tbd in Frameworks */,
+				23C7AC132447377E00F3C411 /* CoreTelephony.framework in Frameworks */,
 				232BF4FA2441A85200017F10 /* libbz2.tbd in Frameworks */,
 				232BF4F82441A84700017F10 /* CoreVideo.framework in Frameworks */,
 				232BF4F62441A83C00017F10 /* CoreMedia.framework in Frameworks */,
@@ -461,6 +464,7 @@
 		232BF4EE2441A82000017F10 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				23C7AC122447377E00F3C411 /* CoreTelephony.framework */,
 				232BF5162441F37D00017F10 /* libiconv.tbd */,
 				232BF50A2441B24000017F10 /* libc++.tbd */,
 				232BF5052441A88F00017F10 /* VideoToolbox.framework */,
