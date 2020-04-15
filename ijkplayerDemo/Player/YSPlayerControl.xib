@@ -106,15 +106,42 @@
                     <rect key="frame" x="429.5" y="188.5" width="37" height="37"/>
                     <color key="color" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                 </activityIndicatorView>
+                <view hidden="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="lb3-zs-BJB">
+                    <rect key="frame" x="339.5" y="58" width="217" height="25"/>
+                    <subviews>
+                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="音量" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="uJb-SW-7qq">
+                            <rect key="frame" x="8" y="5.5" width="25" height="14.5"/>
+                            <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                            <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                            <nil key="highlightedColor"/>
+                        </label>
+                        <progressView opaque="NO" contentMode="scaleToFill" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="quV-FJ-eXs">
+                            <rect key="frame" x="41" y="11.5" width="168" height="2"/>
+                            <color key="progressTintColor" systemColor="systemGreenColor" red="0.20392156859999999" green="0.78039215689999997" blue="0.34901960780000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        </progressView>
+                    </subviews>
+                    <color key="backgroundColor" red="0.0" green="0.0" blue="0.0" alpha="0.69999999999999996" colorSpace="calibratedRGB"/>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="217" id="2In-AV-fhD"/>
+                        <constraint firstAttribute="height" constant="25" id="GcW-Qb-5gd"/>
+                        <constraint firstItem="uJb-SW-7qq" firstAttribute="centerY" secondItem="lb3-zs-BJB" secondAttribute="centerY" id="HVz-3X-Xrs"/>
+                        <constraint firstAttribute="trailing" secondItem="quV-FJ-eXs" secondAttribute="trailing" constant="8" id="bT3-vg-1lO"/>
+                        <constraint firstItem="quV-FJ-eXs" firstAttribute="leading" secondItem="uJb-SW-7qq" secondAttribute="trailing" constant="8" id="ghV-dE-8SV"/>
+                        <constraint firstItem="uJb-SW-7qq" firstAttribute="leading" secondItem="lb3-zs-BJB" secondAttribute="leading" constant="8" id="j0f-Rn-5lR"/>
+                        <constraint firstItem="quV-FJ-eXs" firstAttribute="centerY" secondItem="lb3-zs-BJB" secondAttribute="centerY" id="o8y-7c-9Pd"/>
+                    </constraints>
+                </view>
             </subviews>
             <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
             <constraints>
+                <constraint firstItem="lb3-zs-BJB" firstAttribute="centerX" secondItem="iN0-l3-epB" secondAttribute="centerX" id="143-jL-kh9"/>
                 <constraint firstItem="06i-0d-UZl" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" id="G7P-wl-RRw"/>
                 <constraint firstItem="mz9-zX-8mK" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" id="Ner-zi-NAD"/>
                 <constraint firstAttribute="bottom" secondItem="06i-0d-UZl" secondAttribute="bottom" id="QdB-zA-Koc"/>
                 <constraint firstItem="Bbf-f0-IIg" firstAttribute="centerX" secondItem="iN0-l3-epB" secondAttribute="centerX" id="TNj-SC-ERF"/>
                 <constraint firstAttribute="trailing" secondItem="06i-0d-UZl" secondAttribute="trailing" id="VVm-s2-92A"/>
                 <constraint firstItem="mz9-zX-8mK" firstAttribute="top" secondItem="iN0-l3-epB" secondAttribute="top" id="WNJ-JB-qLZ"/>
+                <constraint firstItem="lb3-zs-BJB" firstAttribute="top" secondItem="mz9-zX-8mK" secondAttribute="bottom" constant="8" id="jTQ-as-VZ9"/>
                 <constraint firstItem="Bbf-f0-IIg" firstAttribute="centerY" secondItem="iN0-l3-epB" secondAttribute="centerY" id="kQD-7I-0Vl"/>
                 <constraint firstAttribute="trailing" secondItem="mz9-zX-8mK" secondAttribute="trailing" id="lhF-ky-aRY"/>
             </constraints>
@@ -130,6 +157,9 @@
                 <outlet property="toolBar" destination="06i-0d-UZl" id="DuY-T2-UqW"/>
                 <outlet property="toolBarBottomConstraint" destination="QdB-zA-Koc" id="OL6-l8-pQj"/>
                 <outlet property="totalTimeLbl" destination="EJZ-je-P9Y" id="BGg-Aa-ghg"/>
+                <outlet property="volumeProgressView" destination="quV-FJ-eXs" id="yMp-cw-3B1"/>
+                <outlet property="volumeTipLbl" destination="uJb-SW-7qq" id="bQq-x4-DoI"/>
+                <outlet property="volumeView" destination="lb3-zs-BJB" id="KQl-GW-6G5"/>
             </connections>
             <point key="canvasLocation" x="138.61607142857142" y="95.652173913043484"/>
         </view>

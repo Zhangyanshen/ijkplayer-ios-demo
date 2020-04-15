@@ -160,9 +160,9 @@ ijkplayer默认不支持https，如果需要支持则需要添加上面生成的
 
 * `VideoToolbox.framework`
 
-## 四、常用功能
+## 四、ijkplayer常用功能
 
-### 1.当前播放时间
+### 1.当前播放时长
 
 ```objective-c
 @property (nonatomic) NSTimeInterval currentPlaybackTime;
@@ -180,9 +180,108 @@ ijkplayer默认不支持https，如果需要支持则需要添加上面生成的
 @property(nonatomic, readonly)  NSTimeInterval playableDuration;
 ```
 
-### 3.倍速播放
+### 4.倍速播放
 
 ```objective-c
-@property (nonatomic) float playbackRate
+@property (nonatomic) float playbackRate // 0.5 ~ 2.0
 ```
+
+### 5.解决音视频不同步的问题
+
+```objective-c
+IJKFFOptions *options = [IJKFFOptions optionsByDefault];
+[options setPlayerOptionIntValue:1 forKey:@"framedrop"];
+```
+
+## 五、iOS音视频开发相关
+
+### 1.屏幕亮度
+
+```objective-c
+// 获取屏幕亮度
+CGFloat brightness = [UIScreen mainScreen].brightness;
+// 设置屏幕亮度
+[UIScreen mainScreen].brightness = brightness;
+```
+
+### 2.系统音量
+
+获取和设置系统音量有2种方式，一是使用`MPMusicPlayerController` ，二是使用`MPVolumeView` 。
+
+* `MPMusicPlayerController` 的`volume` 在iOS 7之后被废弃了，所以不推荐使用；
+* `MPVolumeView` 是`UIView` 的子类，它包含一个AirPlay选择界面和一个`UISlider` 类型的音量调节按钮，我们使用它的话一定要将其添加到我们自己的View上面，否则不起作用。另外，`MPVolumeView` 并没有暴露获取音量和设置音量的属性和方法，所以我们只能通过遍历子视图找到`UISlider` 类型的子视图，然后通过`UISlider` 的`value` 属性来获取和设置。
+
+```objective-c
+// 如果要自定义音量条的话，可以将MPVolumeView的frame设置在屏幕之外
+MPVolumeView *mpVolumeView = [[MPVolumeView alloc] initWithFrame:CGRectMake(-30, -30, 0, 0)];
+// mpVolumeView.showsRouteButton = NO; // 是否显示AirPlay按钮
+// mpVolumeView.showsVolumeSlider = NO; // 是否显示音量条，如果设置为NO，则系统的音量条会显示
+[self addSubview:mpVolumeView];
+// 通过遍历子View获取音量条
+for (UIView *view in mpVolumeView.subviews) {
+		if ([view isKindOfClass:UISlider.class]) {
+    		self.volumeSlider = (UISlider *)view;
+        break;
+    }
+}
+```
+
+### 3.后台继续播放
+
+默认情况下，App进入后台，音频视频会暂停播放，如果想继续播放，则应该开启`Background Modes` 这个Capability，并勾选其中的`Audio, AirPlay, and Picture in Picture` 选项，如下图：
+
+<img src="/Users/zhangyanshen/Library/Application Support/typora-user-images/image-20200415155143416.png" alt="image-20200415155143416" style="zoom:50%;" />
+
+### 4.全屏、非全屏
+
+* 设置 `Info.plist` 中 `Device Orientation` 为 `Portrait` ，即整个App只支持竖屏；
+
+  <img src="/Users/zhangyanshen/Library/Application Support/typora-user-images/image-20200415162626723.png" alt="image-20200415162626723" style="zoom:100%;" />
+
+* 在 `AppDelegate.h` 中定义一个属性 `fullScreen` ，来标识当前页面是否是全屏；
+
+  ```objective-c
+  @property (assign, nonatomic) BOOL fullScreen;
+  ```
+
+* 在 `AppDelegate.m` 中实现下面的方法，根据第二步定义的 `fullScreen` 来返回不同的值；
+
+  ```objective-c
+  - (UIInterfaceOrientationMask)application:(UIApplication *)application
+    supportedInterfaceOrientationsForWindow:(UIWindow *)window
+  {
+      if (self.fullScreen) {
+          return UIInterfaceOrientationMaskLandscape;
+      }
+      return UIInterfaceOrientationMaskPortrait;
+  }
+  ```
+
+* 在点击全屏按钮时设置设备的方向，然后在布局方法中设置相关View的frame；
+
+  ```objective-c
+  // 1.改变设备方法
+  - (void)changeOritention {
+    	/*
+       根据当前是否是全屏来给设备设置不同的方向
+       1.全屏：UIInterfaceOrientationLandscapeRight
+       2.非全屏：UIInterfaceOrientationPortrait
+       */
+      UIInterfaceOrientation orientation = self.playerController.fullScreen ? UIInterfaceOrientationLandscapeRight : UIInterfaceOrientationPortrait;
+    	// 通过KVO设置
+      [[UIDevice currentDevice] setValue:[NSNumber numberWithInteger:orientation] forKey:@"orientation"];
+  }
+  
+  // 2.设置相关View的frame
+  - (void)viewWillLayoutSubviews {
+      [super viewWillLayoutSubviews];
+      if (self.playerController.isFullScreen) {
+          self.playerController.view.frame = self.view.bounds;
+      } else {
+          self.playerController.view.frame = CGRectMake(0, [UIApplication sharedApplication].statusBarFrame.size.height, self.view.bounds.size.width, self.view.bounds.size.width * 9 / 16.0);
+      }
+  }
+  ```
+
+  
 

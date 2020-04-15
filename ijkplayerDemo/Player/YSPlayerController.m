@@ -85,18 +85,6 @@
     }
 }
 
-- (void)seekToProgress:(CGFloat)progress forward:(BOOL)forward {
-    [self progressChangeStart];
-    NSTimeInterval currentPlaybackTime = self.player.currentPlaybackTime;
-    if (forward) {
-        currentPlaybackTime += self.player.duration * progress;
-    } else {
-        currentPlaybackTime -= self.player.duration * progress;
-    }
-    [self.player setCurrentPlaybackTime:currentPlaybackTime];
-    [self progressChangeEnd];
-}
-
 - (void)setPlaybackRate:(CGFloat)playbackRate {
     self.player.playbackRate = playbackRate;
 }
@@ -105,12 +93,17 @@
 
 - (void)handleLoadStateDidChangeNotification:(NSNotification *)notification {
     IJKMPMovieLoadState loadState = self.player.loadState;
-    self.playerView.playControl.prepareToPlay = (loadState & IJKMPMovieLoadStatePlayable) != 0 || (loadState & IJKMPMovieLoadStatePlaythroughOK) != 0;
+    self.playerView.playControl.prepareToPlay = (loadState & IJKMPMovieLoadStatePlaythroughOK) != 0 || (loadState & IJKMPMovieLoadStatePlayable) != 0;
 }
 
 - (void)handlePlaybackStateDidChangeNotification:(NSNotification *)notification {
     IJKMPMoviePlaybackState playbackState = self.player.playbackState;
     self.playerView.playControl.playing = (playbackState == IJKMPMoviePlaybackStatePlaying);
+}
+
+- (void)handlePlaybackDidFinishNotification:(NSNotification *)notification {
+    [self invalidTimer];
+    [self.playerView.playControl playbackComplete];
 }
 
 #pragma mark - Setters/Getters
@@ -154,6 +147,7 @@
 - (void)addNotifications {
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleLoadStateDidChangeNotification:) name:IJKMPMoviePlayerLoadStateDidChangeNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handlePlaybackStateDidChangeNotification:) name:IJKMPMoviePlayerPlaybackStateDidChangeNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handlePlaybackDidFinishNotification:) name:IJKMPMoviePlayerPlaybackDidFinishNotification object:nil];
 }
 
 - (void)removeNotifications {

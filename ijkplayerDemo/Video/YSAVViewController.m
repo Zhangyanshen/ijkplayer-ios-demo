@@ -56,7 +56,13 @@
 #pragma mark - Private methods
 
 - (void)changeOritention {
+    /*
+     根据当前是否是全屏来给设备设置不同的方向
+     1.全屏：UIInterfaceOrientationLandscapeRight
+     2.非全屏：UIInterfaceOrientationPortrait
+     */
     UIInterfaceOrientation orientation = self.playerController.fullScreen ? UIInterfaceOrientationLandscapeRight : UIInterfaceOrientationPortrait;
+    // 通过KVO设置
     [[UIDevice currentDevice] setValue:[NSNumber numberWithInteger:orientation] forKey:@"orientation"];
 }
 

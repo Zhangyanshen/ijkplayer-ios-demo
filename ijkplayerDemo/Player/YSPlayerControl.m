@@ -13,22 +13,18 @@
 #define TOOL_BAR_HEIGHT 50
 
 typedef NS_ENUM(NSUInteger, YSPanDirection) {
-    YSPanDirectionUnknow = 0,
-    YSPanDirectionHorizontal,
-    YSPanDirectionVertical
-};
-
-typedef NS_ENUM(NSUInteger, YSPlaybackRate) {
-    YSPlaybackRateHalf = 0,
-    YSPlaybackRateNormal,
-    YSPlaybackRateOneAndHalf,
-    YSPlaybackRateTwo
+    YSPanDirectionUnknown, // 未知
+    YSPanDirectionHorizontal, // 水平
+    YSPanDirectionVertical // 垂直
 };
 
 @interface YSPlayerControl () <UIGestureRecognizerDelegate>
 
 @property (weak, nonatomic) IBOutlet UIView *navBar;
 @property (weak, nonatomic) IBOutlet UIView *toolBar;
+@property (weak, nonatomic) IBOutlet UIView *volumeView;
+@property (weak, nonatomic) IBOutlet UIProgressView *volumeProgressView;
+@property (weak, nonatomic) IBOutlet UILabel *volumeTipLbl;
 
 @property (weak, nonatomic) IBOutlet UIButton *playBtn;
 @property (weak, nonatomic) IBOutlet UILabel *playTimeLbl;
@@ -44,7 +40,9 @@ typedef NS_ENUM(NSUInteger, YSPlaybackRate) {
 @property (strong, nonatomic) NSTimer *timer;
 
 @property (assign, nonatomic) YSPanDirection direction;
-@property (assign, nonatomic) YSPlaybackRate playbackRate;
+@property (nonatomic, assign) BOOL isVolume;/*!*是否在调节音量*/
+
+@property (strong, nonatomic) UISlider *volumeSlider;
 
 @end
 
@@ -57,15 +55,29 @@ typedef NS_ENUM(NSUInteger, YSPlaybackRate) {
 
 - (void)awakeFromNib {
     [super awakeFromNib];
-    self.playbackRate = YSPlaybackRateNormal;
+    self.direction = YSPanDirectionUnknown;
     self.hideBar = NO;
     self.clipsToBounds = YES;
+    // 音量、亮度view
+    self.volumeView.layer.cornerRadius = 5;
     // 添加触摸手势
     [self addTapGesture];
     // 添加滑动手势
     [self addPanGesture];
     // 开启timer
     [self resetTimer];
+    
+    MPVolumeView *mpVolumeView = [[MPVolumeView alloc] initWithFrame:CGRectMake(-30, -30, 0, 0)];
+//    mpVolumeView.showsRouteButton = NO; // 是否显示AirPlay按钮
+//    mpVolumeView.showsVolumeSlider = NO; // 是否显示音量条，如果设置为NO，则系统的音量条会显示
+    [self addSubview:mpVolumeView];
+    for (UIView *view in mpVolumeView.subviews) {
+        if ([view isKindOfClass:UISlider.class]) {
+            self.volumeSlider = (UISlider *)view;
+            break;
+        }
+    }
+    
 }
 
 #pragma mark - UIGestureRecognizerDelegate
@@ -78,6 +90,19 @@ typedef NS_ENUM(NSUInteger, YSPlaybackRate) {
     return YES;
 }
 
+#pragma mark - YSPlayerControlProtocol
+
+- (void)setPlayTime:(NSTimeInterval)playTime totalTime:(NSTimeInterval)totalTime {
+    self.playTimeLbl.text = [self formatTime:playTime];
+    self.totalTimeLbl.text = [self formatTime:totalTime];
+    self.progressSlider.value = playTime / totalTime;
+}
+
+- (void)playbackComplete {
+    self.progressSlider.value = 0.0;
+    self.playTimeLbl.text = @"00:00";
+}
+
 #pragma mark - Event response
 
 - (void)handleSingleTapGesture:(UITapGestureRecognizer *)tap {
@@ -85,61 +110,130 @@ typedef NS_ENUM(NSUInteger, YSPlaybackRate) {
 }
 
 - (void)handleDoubleTapGesture:(UITapGestureRecognizer *)tap {
-    [self resetTimer];
     if ([self.delegate respondsToSelector:@selector(play)]) {
         [self.delegate play];
     }
 }
 
 - (void)handlePanGesture:(UIPanGestureRecognizer *)pan {
-    
-    CGFloat startX = [pan locationInView:pan.view].x;
-    
+    // 根据上次和本次移动的位置，算出一个速率的point
+    //这个很关键,这个速率直接决定了平移手势的快慢
+    CGPoint veloctyPoint = [pan velocityInView:pan.view];
+    CGPoint translation = [pan translationInView:pan.view];
+
+    // 判断是垂直移动还是水平移动
     switch (pan.state) {
-        case UIGestureRecognizerStateBegan:
-        {
-            self.direction = YSPanDirectionUnknow;
-            NSLog(@"深哥：start：%@", NSStringFromCGPoint([pan locationInView:pan.view]));
-        }
-            break;
-        case UIGestureRecognizerStateChanged:
-        {
-            NSLog(@"深哥：changed：%@", NSStringFromCGPoint([pan locationInView:pan.view]));
-            CGPoint translation = [pan translationInView:pan.view];
-            CGFloat absX = fabs(translation.x);
-            CGFloat absY = fabs(translation.y);
-            if (MAX(absX, absY) < 10) {
-                return;
-            }
-            if (absX > absY) { // 水平
+        case UIGestureRecognizerStateBegan:{ // 开始移动
+            // 使用绝对值来判断移动的方向
+            CGFloat x = fabs(veloctyPoint.x);
+            CGFloat y = fabs(veloctyPoint.y);
+            if (x > y) { // 水平移动
                 self.direction = YSPanDirectionHorizontal;
-                CGFloat deltaX = [pan velocityInView:pan.view].x;
-                BOOL forward = YES;
-                if (translation.x < 0) { // 后退
-                    forward = NO;
+                // 让timer失效
+                [self invalidTimer];
+                // 暂停播放
+                if ([self.delegate respondsToSelector:@selector(progressChangeStart)]) {
+                    [self.delegate progressChangeStart];
                 }
-                if ([self.delegate respondsToSelector:@selector(seekToProgress:forward:)]) {
-                    [self.delegate seekToProgress:fabs(deltaX / self.bounds.size.width / 100.0) forward:forward];
-                }
-            } else if (absY > absX) { // 垂直
+            } else if (x < y) { // 垂直移动
+                // 获取当前页面手指触摸的点
+                CGPoint locationPoint = [pan locationInView:pan.view];
+                // 音量和亮度
                 self.direction = YSPanDirectionVertical;
-                CGPoint velocity = [pan velocityInView:pan.view];
-                if (startX <= self.bounds.size.width * 0.5) {
-                    [self changeBrightness:velocity.y];
+                // 显示volumeView
+                self.volumeView.hidden = NO;
+                // 判断移动的点在屏幕的哪个位置
+                if (locationPoint.x <= self.frame.size.width / 2.0) {//以屏幕的1/2位分界线
+                    //亮度,调节亮度
+                    self.isVolume = NO;
+                    // 初始化屏幕亮度
+                    [self initScreenBrightness];
                 } else {
-                    [self changeVolume:velocity.y];
+                    //音量.调节音量
+                    self.isVolume = YES;
+                    // 初始化系统音量
+                    [self initSystemVolume];
                 }
             }
-        }
             break;
-        case UIGestureRecognizerStateEnded:
-        {
-            NSLog(@"深哥：end：%@", NSStringFromCGPoint([pan locationInView:pan.view]));
         }
+        case UIGestureRecognizerStateChanged:{ // 正在移动
+            switch (self.direction){//通过手势变量来判断是什么操作
+                case YSPanDirectionVertical: // 垂直
+                {
+                    CGFloat scale = translation.y / self.bounds.size.height;
+                    if (self.isVolume) {
+                        [self changeVolume:scale];
+                    } else {
+                        [self changeBrightness:scale];
+                    }
+                    break;
+                }
+                case YSPanDirectionHorizontal: // 水平
+                {
+                    CGFloat scale = translation.x / self.bounds.size.width;
+                    self.progressSlider.value += scale;
+                    if (self.progressSlider.value > 1.0) {
+                        self.progressSlider.value = 1.0;
+                    }
+                    if (self.progressSlider.value < 0.0) {
+                        self.progressSlider.value = 0.0;
+                    }
+                    if ([self.delegate respondsToSelector:@selector(didChangeProgress:)]) {
+                        [self.delegate didChangeProgress:self.progressSlider.value];
+                    }
+                    break;
+                }
+                default:
+                {
+                    
+                }
+                    break;
+            }
             break;
+
+        }
+        case UIGestureRecognizerStateEnded: { // 移动停止
+            switch (self.direction) {
+                case YSPanDirectionVertical: // 垂直
+                {
+                    self.isVolume = NO;
+                    // 隐藏volumeView
+//                    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                        [UIView animateWithDuration:0.5 animations:^{
+                            self.volumeView.alpha = 0.0;
+                        } completion:^(BOOL finished) {
+                            self.volumeView.hidden = YES;
+                            self.volumeView.alpha = 1.0;
+                        }];
+//                    });
+                    break;
+                }
+                case YSPanDirectionHorizontal: //水平
+                {
+                    // 重新开启timer
+                    [self resetTimer];
+                    // 开始播放
+                    if ([self.delegate respondsToSelector:@selector(progressChangeEnd)]) {
+                        [self.delegate progressChangeEnd];
+                    }
+                    break;
+                }
+                default:
+                {
+                    
+                }
+                    break;
+            }
+        }
         default:
+        {
+            
+        }
             break;
     }
+    // 清空位移数据，避免拖拽事件的位移叠加
+    [pan setTranslation:CGPointZero inView:pan.view];
 }
 
 - (IBAction)doneBtnClick:(UIButton *)sender {
@@ -198,12 +292,6 @@ typedef NS_ENUM(NSUInteger, YSPlaybackRate) {
 
 #pragma mark - Setters/Getters
 
-- (void)setPlayTime:(NSTimeInterval)playTime totalTime:(NSTimeInterval)totalTime {
-    self.playTimeLbl.text = [self formatTime:playTime];
-    self.totalTimeLbl.text = [self formatTime:totalTime];
-    self.progressSlider.value = playTime / totalTime;
-}
-
 - (void)setPlaying:(BOOL)playing {
     _playing = playing;
     NSString *img = playing ? @"player-pause" : @"player-start";
@@ -246,10 +334,22 @@ typedef NS_ENUM(NSUInteger, YSPlaybackRate) {
     [self addGestureRecognizer:pan];
 }
 
+// 初始化屏幕亮度
+- (void)initScreenBrightness {
+    self.volumeTipLbl.text = @"亮度";
+    self.volumeProgressView.progress = [UIScreen mainScreen].brightness;
+}
+
+// 初始化系统音量
+- (void)initSystemVolume {
+    self.volumeTipLbl.text = @"音量";
+    self.volumeProgressView.progress = self.volumeSlider.value;
+}
+
 // 改变屏幕亮度
 - (void)changeBrightness:(CGFloat)deltaY {
     CGFloat brightness = [UIScreen mainScreen].brightness;
-    brightness -= deltaY / 10000.0;
+    brightness -= deltaY;
     if (brightness > 1.0) {
         brightness = 1.0;
     }
@@ -257,20 +357,24 @@ typedef NS_ENUM(NSUInteger, YSPlaybackRate) {
         brightness = 0.0;
     }
     [UIScreen mainScreen].brightness = brightness;
+    self.volumeProgressView.progress = brightness;
 }
 
 // 改变系统音量
 - (void)changeVolume:(CGFloat)deltaY {
-    MPMusicPlayerController *playerController = [MPMusicPlayerController applicationMusicPlayer];
-    float volume = playerController.volume;
-    volume -= deltaY / 10000.0;
+//    MPMusicPlayerController *playerController = [MPMusicPlayerController applicationMusicPlayer];
+//    float volume = playerController.volume;
+    float volume = self.volumeSlider.value;
+    volume -= deltaY;
     if (volume > 1.0) {
         volume = 1.0;
     }
     if (volume < 0.0) {
         volume = 0.0;
     }
-    playerController.volume = volume;
+//    playerController.volume = volume;
+    self.volumeSlider.value = volume;
+    self.volumeProgressView.progress = volume;
 }
 
 // 隐藏或显示toolBar和navBar

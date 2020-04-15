@@ -38,6 +38,11 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (void)setPlayTime:(NSTimeInterval)playTime totalTime:(NSTimeInterval)totalTime;
 
+/**
+ 播放完成
+ */
+- (void)playbackComplete;
+
 @end
 
 NS_ASSUME_NONNULL_END
