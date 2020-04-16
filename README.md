@@ -230,13 +230,13 @@ for (UIView *view in mpVolumeView.subviews) {
 
 默认情况下，App进入后台，音频视频会暂停播放，如果想继续播放，则应该开启`Background Modes` 这个Capability，并勾选其中的`Audio, AirPlay, and Picture in Picture` 选项，如下图：
 
-<img src="/Users/zhangyanshen/Library/Application Support/typora-user-images/image-20200415155143416.png" alt="image-20200415155143416" style="zoom:50%;" />
+<img src="./imgs/image-20200415155143416.png" alt="image-20200415155143416" style="zoom:50%;" />
 
 ### 4.全屏、非全屏
 
 * 设置 `Info.plist` 中 `Device Orientation` 为 `Portrait` ，即整个App只支持竖屏；
 
-  <img src="/Users/zhangyanshen/Library/Application Support/typora-user-images/image-20200415162626723.png" alt="image-20200415162626723" style="zoom:100%;" />
+  <img src="./imgs/image-20200415162626723.png" alt="image-20200415162626723" style="zoom:100%;" />
 
 * 在 `AppDelegate.h` 中定义一个属性 `fullScreen` ，来标识当前页面是否是全屏；
 
@@ -291,7 +291,7 @@ for (UIView *view in mpVolumeView.subviews) {
 
 * 添加 `CoreTelephony.framework` ；
 
-  <img src="/Users/zhangyanshen/Library/Application Support/typora-user-images/image-20200415211713861.png" alt="image-20200415211713861" style="zoom:50%;" />
+  <img src="./imgs/image-20200415211713861.png" alt="image-20200415211713861" style="zoom:50%;" />
 
 * 导入头文件；
 
@@ -400,5 +400,26 @@ for (UIView *view in mpVolumeView.subviews) {
 
   > **注意：**获取电池状态和电量在首次加载时并不会走监听方法，所以在刚启动时，需要先手动获取一下。
 
-### 8.获取网络信息
+### 8.获取网络连接信息
+
+获取网络连接信息可以通过第三方库：[Reachability](https://github.com/tonymillion/Reachability) ，代码如下：
+
+```objective-c
+Reachability* reach = [Reachability reachabilityWithHostname:@"www.apple.com"];
+reach.reachableBlock = ^(Reachability *reach) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSLog(@"REACHABLE!");
+        block(reach.currentReachabilityString);
+    });
+};
+reach.unreachableBlock = ^(Reachability *reach) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSLog(@"UNREACHABLE!");
+        block(@"无网");
+    });
+};
+[reach startNotifier];
+```
+
+
 

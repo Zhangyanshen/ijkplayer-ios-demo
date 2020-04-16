@@ -118,6 +118,13 @@
 		23C7AC0D244455E000F3C411 /* MASViewConstraint.m in Sources */ = {isa = PBXBuildFile; fileRef = 23C7AC02244455E000F3C411 /* MASViewConstraint.m */; };
 		23C7AC0E244455E000F3C411 /* MASViewAttribute.m in Sources */ = {isa = PBXBuildFile; fileRef = 23C7AC03244455E000F3C411 /* MASViewAttribute.m */; };
 		23C7AC132447377E00F3C411 /* CoreTelephony.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 23C7AC122447377E00F3C411 /* CoreTelephony.framework */; };
+		23C7AC17244857D500F3C411 /* Reachability.m in Sources */ = {isa = PBXBuildFile; fileRef = 23C7AC15244857D500F3C411 /* Reachability.m */; };
+		23C7AC192448580700F3C411 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 23C7AC182448580700F3C411 /* SystemConfiguration.framework */; };
+		23C7AC1D2448591400F3C411 /* YSNetworkInfoTool.m in Sources */ = {isa = PBXBuildFile; fileRef = 23C7AC1C2448591400F3C411 /* YSNetworkInfoTool.m */; };
+		23C7AC20244860CC00F3C411 /* YSBatteryTool.m in Sources */ = {isa = PBXBuildFile; fileRef = 23C7AC1F244860CC00F3C411 /* YSBatteryTool.m */; };
+		23C7AC232448686600F3C411 /* YSCarrierTool.m in Sources */ = {isa = PBXBuildFile; fileRef = 23C7AC222448686600F3C411 /* YSCarrierTool.m */; };
+		23C7AC2624488CB800F3C411 /* YSScreenBrightnessTool.m in Sources */ = {isa = PBXBuildFile; fileRef = 23C7AC2524488CB800F3C411 /* YSScreenBrightnessTool.m */; };
+		23C7AC292448903F00F3C411 /* YSVolumeTool.m in Sources */ = {isa = PBXBuildFile; fileRef = 23C7AC282448903F00F3C411 /* YSVolumeTool.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -355,6 +362,19 @@
 		23C7AC03244455E000F3C411 /* MASViewAttribute.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MASViewAttribute.m; sourceTree = "<group>"; };
 		23C7AC1024445E1000F3C411 /* YSPlayerControlProtocol.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = YSPlayerControlProtocol.h; sourceTree = "<group>"; };
 		23C7AC122447377E00F3C411 /* CoreTelephony.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreTelephony.framework; path = System/Library/Frameworks/CoreTelephony.framework; sourceTree = SDKROOT; };
+		23C7AC15244857D500F3C411 /* Reachability.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Reachability.m; sourceTree = "<group>"; };
+		23C7AC16244857D500F3C411 /* Reachability.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Reachability.h; sourceTree = "<group>"; };
+		23C7AC182448580700F3C411 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
+		23C7AC1B2448591400F3C411 /* YSNetworkInfoTool.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = YSNetworkInfoTool.h; sourceTree = "<group>"; };
+		23C7AC1C2448591400F3C411 /* YSNetworkInfoTool.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = YSNetworkInfoTool.m; sourceTree = "<group>"; };
+		23C7AC1E244860CC00F3C411 /* YSBatteryTool.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = YSBatteryTool.h; sourceTree = "<group>"; };
+		23C7AC1F244860CC00F3C411 /* YSBatteryTool.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = YSBatteryTool.m; sourceTree = "<group>"; };
+		23C7AC212448686600F3C411 /* YSCarrierTool.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = YSCarrierTool.h; sourceTree = "<group>"; };
+		23C7AC222448686600F3C411 /* YSCarrierTool.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = YSCarrierTool.m; sourceTree = "<group>"; };
+		23C7AC2424488CB800F3C411 /* YSScreenBrightnessTool.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = YSScreenBrightnessTool.h; sourceTree = "<group>"; };
+		23C7AC2524488CB800F3C411 /* YSScreenBrightnessTool.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = YSScreenBrightnessTool.m; sourceTree = "<group>"; };
+		23C7AC272448903F00F3C411 /* YSVolumeTool.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = YSVolumeTool.h; sourceTree = "<group>"; };
+		23C7AC282448903F00F3C411 /* YSVolumeTool.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = YSVolumeTool.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -368,6 +388,7 @@
 				232BF5022441A87B00017F10 /* OpenGLES.framework in Frameworks */,
 				232BF5002441A87000017F10 /* MobileCoreServices.framework in Frameworks */,
 				232BF4FE2441A86700017F10 /* MediaPlayer.framework in Frameworks */,
+				23C7AC192448580700F3C411 /* SystemConfiguration.framework in Frameworks */,
 				232BF4FC2441A85E00017F10 /* libz.tbd in Frameworks */,
 				23C7AC132447377E00F3C411 /* CoreTelephony.framework in Frameworks */,
 				232BF4FA2441A85200017F10 /* libbz2.tbd in Frameworks */,
@@ -422,6 +443,7 @@
 			isa = PBXGroup;
 			children = (
 				23C7AB5D24430DE400F3C411 /* IJKMediaFramework.framework */,
+				23C7AC14244857D500F3C411 /* Reachability */,
 				23C7ABEA244455E000F3C411 /* Masonry */,
 				23C7AA822442C13B00F3C411 /* SDWebImage */,
 				232BF50C2441BFAE00017F10 /* hubblecast.m4v */,
@@ -431,6 +453,7 @@
 				232BF4BB2441A67900017F10 /* SceneDelegate.m */,
 				232BF4BD2441A67900017F10 /* ViewController.h */,
 				232BF4BE2441A67900017F10 /* ViewController.m */,
+				23C7AC1A244858E100F3C411 /* Tool */,
 				23C7AC112444649E00F3C411 /* Video */,
 				23C7AB6A24440E8100F3C411 /* Player */,
 				23C7AB61244401A400F3C411 /* Live */,
@@ -464,6 +487,7 @@
 		232BF4EE2441A82000017F10 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				23C7AC182448580700F3C411 /* SystemConfiguration.framework */,
 				23C7AC122447377E00F3C411 /* CoreTelephony.framework */,
 				232BF5162441F37D00017F10 /* libiconv.tbd */,
 				232BF50A2441B24000017F10 /* libc++.tbd */,
@@ -724,6 +748,32 @@
 			path = Video;
 			sourceTree = "<group>";
 		};
+		23C7AC14244857D500F3C411 /* Reachability */ = {
+			isa = PBXGroup;
+			children = (
+				23C7AC16244857D500F3C411 /* Reachability.h */,
+				23C7AC15244857D500F3C411 /* Reachability.m */,
+			);
+			path = Reachability;
+			sourceTree = "<group>";
+		};
+		23C7AC1A244858E100F3C411 /* Tool */ = {
+			isa = PBXGroup;
+			children = (
+				23C7AC1B2448591400F3C411 /* YSNetworkInfoTool.h */,
+				23C7AC1C2448591400F3C411 /* YSNetworkInfoTool.m */,
+				23C7AC1E244860CC00F3C411 /* YSBatteryTool.h */,
+				23C7AC1F244860CC00F3C411 /* YSBatteryTool.m */,
+				23C7AC212448686600F3C411 /* YSCarrierTool.h */,
+				23C7AC222448686600F3C411 /* YSCarrierTool.m */,
+				23C7AC2424488CB800F3C411 /* YSScreenBrightnessTool.h */,
+				23C7AC2524488CB800F3C411 /* YSScreenBrightnessTool.m */,
+				23C7AC272448903F00F3C411 /* YSVolumeTool.h */,
+				23C7AC282448903F00F3C411 /* YSVolumeTool.m */,
+			);
+			path = Tool;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -890,6 +940,7 @@
 				23C7AB202442C13B00F3C411 /* SDImageLoader.m in Sources */,
 				232BF4B92441A67900017F10 /* AppDelegate.m in Sources */,
 				23C7AB3C2442C13B00F3C411 /* NSData+ImageContentType.m in Sources */,
+				23C7AC17244857D500F3C411 /* Reachability.m in Sources */,
 				23C7AB522442C13B00F3C411 /* SDAsyncBlockOperation.m in Sources */,
 				23C7AB172442C13B00F3C411 /* SDWebImageManager.m in Sources */,
 				23C7AB232442C13B00F3C411 /* SDGraphicsImageRenderer.m in Sources */,
@@ -911,14 +962,17 @@
 				23C7AB2F2442C13B00F3C411 /* SDImageIOCoder.m in Sources */,
 				23C7AB332442C13B00F3C411 /* SDWebImageDownloaderConfig.m in Sources */,
 				23C7AB1A2442C13B00F3C411 /* SDAnimatedImage.m in Sources */,
+				23C7AC2624488CB800F3C411 /* YSScreenBrightnessTool.m in Sources */,
 				23C7AC09244455E000F3C411 /* MASLayoutConstraint.m in Sources */,
 				232BF4CA2441A67900017F10 /* main.m in Sources */,
 				23C7AB252442C13B00F3C411 /* SDImageCodersManager.m in Sources */,
 				23C7AC0B244455E000F3C411 /* View+MASAdditions.m in Sources */,
+				23C7AC292448903F00F3C411 /* YSVolumeTool.m in Sources */,
 				23C7AC08244455E000F3C411 /* MASConstraintMaker.m in Sources */,
 				23C7AB512442C13B00F3C411 /* SDDisplayLink.m in Sources */,
 				23C7AB432442C13B00F3C411 /* SDWebImageDefine.m in Sources */,
 				23C7AB482442C13B00F3C411 /* UIButton+WebCache.m in Sources */,
+				23C7AC1D2448591400F3C411 /* YSNetworkInfoTool.m in Sources */,
 				23C7AB422442C13B00F3C411 /* SDWebImageCacheKeyFilter.m in Sources */,
 				23C7AB132442C13B00F3C411 /* NSImage+Compatibility.m in Sources */,
 				23C7AB152442C13B00F3C411 /* SDImageCoder.m in Sources */,
@@ -941,7 +995,9 @@
 				23C7AC0C244455E000F3C411 /* MASConstraint.m in Sources */,
 				23C7AB532442C13B00F3C411 /* NSBezierPath+RoundedCorners.m in Sources */,
 				23C7AB3B2442C13B00F3C411 /* SDImageTransformer.m in Sources */,
+				23C7AC20244860CC00F3C411 /* YSBatteryTool.m in Sources */,
 				23C7AC06244455E000F3C411 /* ViewController+MASAdditions.m in Sources */,
+				23C7AC232448686600F3C411 /* YSCarrierTool.m in Sources */,
 				23C7AB292442C13B00F3C411 /* SDImageAPNGCoder.m in Sources */,
 				23C7AB642444087400F3C411 /* YSPlayerController.m in Sources */,
 				23C7AB442442C13B00F3C411 /* SDWebImageOptionsProcessor.m in Sources */,
@@ -1120,6 +1176,7 @@
 					"$(PROJECT_DIR)/ijkplayerDemo",
 				);
 				INFOPLIST_FILE = ijkplayerDemo/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1127,6 +1184,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = cn.newbanker.ijkplayerDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TARGETED_DEVICE_FAMILY = "1,2";
+				VALID_ARCHS = "arm64 arm64e armv7s";
 			};
 			name = Debug;
 		};
@@ -1141,6 +1199,7 @@
 					"$(PROJECT_DIR)/ijkplayerDemo",
 				);
 				INFOPLIST_FILE = ijkplayerDemo/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1148,6 +1207,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = cn.newbanker.ijkplayerDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TARGETED_DEVICE_FAMILY = "1,2";
+				VALID_ARCHS = "arm64 arm64e armv7s";
 			};
 			name = Release;
 		};

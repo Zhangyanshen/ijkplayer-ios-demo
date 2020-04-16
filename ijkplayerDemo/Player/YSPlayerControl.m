@@ -8,8 +8,12 @@
 
 #import "YSPlayerControl.h"
 #import <MediaPlayer/MediaPlayer.h>
-#import <CoreTelephony/CTTelephonyNetworkInfo.h>
-#import <CoreTelephony/CTCarrier.h>
+#import "YSNetworkInfoTool.h"
+#import "YSBatteryTool.h"
+#import "YSCarrierTool.h"
+#import "YSScreenBrightnessTool.h"
+#import "YSVolumeTool.h"
+#import "SDWeakProxy.h"
 
 #define NAV_BAR_HEIGHT 50
 #define TOOL_BAR_HEIGHT 50
@@ -32,6 +36,7 @@ typedef NS_ENUM(NSUInteger, YSPanDirection) {
  status bar
  */
 @property (weak, nonatomic) IBOutlet UIView *statusBar;
+@property (weak, nonatomic) IBOutlet UILabel *networkInfoLbl; // 网络信息
 @property (weak, nonatomic) IBOutlet UILabel *carrierLbl; // 运营商
 @property (weak, nonatomic) IBOutlet UILabel *timeLbl; // 时间
 @property (weak, nonatomic) IBOutlet UILabel *batteryStateLbl; // 电池状态
@@ -61,8 +66,8 @@ typedef NS_ENUM(NSUInteger, YSPanDirection) {
 @property (assign, nonatomic) YSPanDirection direction;
 @property (nonatomic, assign) BOOL isVolume;/*!*是否在调节音量*/
 
-@property (strong, nonatomic) UISlider *volumeSlider;
-@property (strong, nonatomic) CTTelephonyNetworkInfo *networkInfo;
+@property (strong, nonatomic) YSBatteryTool *batteryTool;
+@property (strong, nonatomic) YSVolumeTool *volumeTool;
 
 @end
 
@@ -78,8 +83,6 @@ typedef NS_ENUM(NSUInteger, YSPanDirection) {
     self.direction = YSPanDirectionUnknown;
     self.hideBar = NO;
     self.clipsToBounds = YES;
-    // 开启电池监测
-    [UIDevice currentDevice].batteryMonitoringEnabled = YES;
     // 音量、亮度view
     self.volumeView.layer.cornerRadius = 5;
     // 添加触摸手势
@@ -88,28 +91,16 @@ typedef NS_ENUM(NSUInteger, YSPanDirection) {
     [self addPanGesture];
     // 开启timer
     [self resetTimer];
-    // 添加通知
-    [self addNotifications];
     // 获取运营商
     [self loadCarrier];
-    // 获取电池状态
-    [self loadBatteryState];
-    // 获取电池电量
-    [self loadBatteryLevel];
+    // 获取网络信息
+    [self loadNetworkInfo];
+    // 获取电池信息
+    [self loadBatteryInfo];
     // 开启获取系统时间timer
     [self startTimeTimer];
-    
-    MPVolumeView *mpVolumeView = [[MPVolumeView alloc] initWithFrame:CGRectMake(-30, -30, 0, 0)];
-//    mpVolumeView.showsRouteButton = NO; // 是否显示AirPlay按钮
-//    mpVolumeView.showsVolumeSlider = NO; // 是否显示音量条，如果设置为NO，则系统的音量条会显示
-    [self addSubview:mpVolumeView];
-    for (UIView *view in mpVolumeView.subviews) {
-        if ([view isKindOfClass:UISlider.class]) {
-            self.volumeSlider = (UISlider *)view;
-            break;
-        }
-    }
-    
+    // 添加MPVolumeView
+    [self addMPVolumeView];
 }
 
 #pragma mark - UIGestureRecognizerDelegate
@@ -322,22 +313,7 @@ typedef NS_ENUM(NSUInteger, YSPanDirection) {
     }
 }
 
-- (void)handleBatteryStateDidChangeNotification:(NSNotification *)notification {
-    [self loadBatteryState];
-}
-
-- (void)handleBatteryLevelDidChangeNotification:(NSNotification *)notification {
-    [self loadBatteryLevel];
-}
-
 #pragma mark - Setters/Getters
-
-- (CTTelephonyNetworkInfo *)networkInfo {
-    if (!_networkInfo) {
-        _networkInfo = [[CTTelephonyNetworkInfo alloc] init];
-    }
-    return _networkInfo;
-}
 
 - (void)setPlaying:(BOOL)playing {
     _playing = playing;
@@ -363,19 +339,6 @@ typedef NS_ENUM(NSUInteger, YSPanDirection) {
 
 #pragma mark - Private methods
 
-// 添加通知
-- (void)addNotifications {
-    // 电池状态
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleBatteryStateDidChangeNotification:) name:UIDeviceBatteryStateDidChangeNotification object:nil];
-    // 电池电量
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleBatteryLevelDidChangeNotification:) name:UIDeviceBatteryLevelDidChangeNotification object:nil];
-}
-
-// 移除通知
-- (void)removeNotifications {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-}
-
 - (void)addTapGesture {
     // 单击手势
     UITapGestureRecognizer *singleTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleSingleTapGesture:)];
@@ -395,108 +358,71 @@ typedef NS_ENUM(NSUInteger, YSPanDirection) {
     [self addGestureRecognizer:pan];
 }
 
-// 加载运营商信息
+// 添加MPVolumeView
+- (void)addMPVolumeView {
+    self.volumeTool = [[YSVolumeTool alloc] init];
+    [self addSubview:self.volumeTool.mpVolumeView];
+}
+
+// 获取运营商信息
 - (void)loadCarrier {
-    NSDictionary *carrierDic = [self.networkInfo serviceSubscriberCellularProviders];
-    [self updateCarrierInfo:carrierDic[self.networkInfo.dataServiceIdentifier]];
     __weak typeof(self) weakSelf = self;
-    // 监听运营商变化
-    self.networkInfo.serviceSubscriberCellularProvidersDidUpdateNotifier = ^(NSString * _Nonnull dataServiceIdentifier) {
-        CTCarrier *carrier = carrierDic[dataServiceIdentifier];
-        [weakSelf updateCarrierInfo:carrier];
-    };
+    [YSCarrierTool loadCarrier:^(NSString * _Nonnull carrierName) {
+        weakSelf.carrierLbl.text = carrierName;
+    }];
 }
 
-// 更新运营商信息
-- (void)updateCarrierInfo:(CTCarrier *)carrier {
-    NSString *carrierName;
-    if (!carrier.isoCountryCode) {
-        carrierName = @"无SIM卡";
-    } else {
-        carrierName = carrier.carrierName;
-    }
-    self.carrierLbl.text = carrierName;
+// 获取网络信息
+- (void)loadNetworkInfo {
+    __weak typeof(self) weakSelf = self;
+    [YSNetworkInfoTool loadNetworkInfo:^(NSString * _Nonnull info) {
+        weakSelf.networkInfoLbl.text = info;
+    }];
 }
 
-// 初始化电量
-- (void)loadBatteryLevel {
-    float batteryLevel = [UIDevice currentDevice].batteryLevel;
-    if (batteryLevel < 0.0) {
-        self.batteryLevelLbl.text = @"0%";
-    } else {
-        self.batteryLevelLbl.text = [NSString stringWithFormat:@"%.0f%%", batteryLevel * 100];
-    }
+// 获取电池信息
+- (void)loadBatteryInfo {
+    __weak typeof(self) weakSelf = self;
+    self.batteryTool = [YSBatteryTool batteryToolWithStatus:^(NSString * _Nonnull status, UIColor *color) {
+        weakSelf.batteryStateLbl.text = status;
+        [weakSelf changeBatteryColor:color];
+    } level:^(float level, UIColor *color) {
+        weakSelf.batteryLevelLbl.text = [NSString stringWithFormat:@"%.0f%%", level * 100];
+        [weakSelf changeBatteryColor:color];
+    }];
 }
 
-// 初始化电池状态
-- (void)loadBatteryState {
-    UIDeviceBatteryState batteryState = [UIDevice currentDevice].batteryState;
-    switch (batteryState) {
-        case UIDeviceBatteryStateCharging: // 正在充电(<100%)
-        {
-            self.batteryStateLbl.text = @"充电中";
-        }
-            break;
-        case UIDeviceBatteryStateFull: // 正在充电(100%)
-        {
-            self.batteryStateLbl.text = @"已充满";
-        }
-            break;
-        case UIDeviceBatteryStateUnplugged:
-        {
-            self.batteryStateLbl.text = @"未充电";
-        }
-            break;
-        case UIDeviceBatteryStateUnknown:
-        {
-            self.batteryStateLbl.text = @"未知";
-        }
-            break;
-        default:
-            break;
-    }
+// 改变电池颜色
+- (void)changeBatteryColor:(UIColor *)color {
+    self.batteryStateLbl.textColor = color;
+    self.batteryLevelLbl.textColor = color;
 }
 
 // 初始化屏幕亮度
 - (void)initScreenBrightness {
     self.volumeTipLbl.text = @"亮度";
-    self.volumeProgressView.progress = [UIScreen mainScreen].brightness;
+    self.volumeProgressView.progress = [YSScreenBrightnessTool getBrightness];
 }
 
 // 初始化系统音量
 - (void)initSystemVolume {
     self.volumeTipLbl.text = @"音量";
-    self.volumeProgressView.progress = self.volumeSlider.value;
+    self.volumeProgressView.progress = self.volumeTool.volume;
 }
 
 // 改变屏幕亮度
 - (void)changeBrightness:(CGFloat)deltaY {
-    CGFloat brightness = [UIScreen mainScreen].brightness;
+    CGFloat brightness = [YSScreenBrightnessTool getBrightness];
     brightness -= deltaY;
-    if (brightness > 1.0) {
-        brightness = 1.0;
-    }
-    if (brightness < 0.0) {
-        brightness = 0.0;
-    }
-    [UIScreen mainScreen].brightness = brightness;
+    [YSScreenBrightnessTool changeBrightness:brightness];
     self.volumeProgressView.progress = brightness;
 }
 
 // 改变系统音量
 - (void)changeVolume:(CGFloat)deltaY {
-//    MPMusicPlayerController *playerController = [MPMusicPlayerController applicationMusicPlayer];
-//    float volume = playerController.volume;
-    float volume = self.volumeSlider.value;
+    float volume = self.volumeTool.volume;
     volume -= deltaY;
-    if (volume > 1.0) {
-        volume = 1.0;
-    }
-    if (volume < 0.0) {
-        volume = 0.0;
-    }
-//    playerController.volume = volume;
-    self.volumeSlider.value = volume;
+    self.volumeTool.volume = volume;
     self.volumeProgressView.progress = volume;
 }
 
@@ -528,9 +454,13 @@ typedef NS_ENUM(NSUInteger, YSPanDirection) {
 - (void)resetTimer {
     [self invalidTimer];
     __weak typeof(self) weakSelf = self;
-    self.timer = [NSTimer timerWithTimeInterval:5 repeats:NO block:^(NSTimer * _Nonnull timer) {
-        [weakSelf toggleBar];
-    }];
+    if (@available(iOS 10.0, *)) {
+        self.timer = [NSTimer timerWithTimeInterval:5 repeats:NO block:^(NSTimer * _Nonnull timer) {
+            [weakSelf toggleBar];
+        }];
+    } else {
+        self.timer = [NSTimer timerWithTimeInterval:5 target:[SDWeakProxy proxyWithTarget:self] selector:@selector(toggleBar) userInfo:nil repeats:NO];
+    }
     [[NSRunLoop currentRunLoop] addTimer:self.timer forMode:NSRunLoopCommonModes];
 }
 
@@ -544,12 +474,13 @@ typedef NS_ENUM(NSUInteger, YSPanDirection) {
 
 - (void)startTimeTimer {
     __weak typeof(self) weakSelf = self;
-    self.timeTimer = [NSTimer timerWithTimeInterval:1 repeats:YES block:^(NSTimer * _Nonnull timer) {
-        NSDate *date = [NSDate date];
-        NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
-        formatter.dateFormat = @"HH:mm";
-        weakSelf.timeLbl.text = [formatter stringFromDate:date];
-    }];
+    if (@available(iOS 10.0, *)) {
+        self.timeTimer = [NSTimer timerWithTimeInterval:1 repeats:YES block:^(NSTimer * _Nonnull timer) {
+            [weakSelf setSystemTime];
+        }];
+    } else {
+        self.timeTimer = [NSTimer timerWithTimeInterval:1 target:[SDWeakProxy proxyWithTarget:self] selector:@selector(setSystemTime) userInfo:nil repeats:YES];
+    }
     [[NSRunLoop currentRunLoop] addTimer:self.timeTimer forMode:NSRunLoopCommonModes];
 }
 
@@ -560,12 +491,20 @@ typedef NS_ENUM(NSUInteger, YSPanDirection) {
     }
 }
 
+// 设置系统时间
+- (void)setSystemTime {
+    NSDate *date = [NSDate date];
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    formatter.dateFormat = @"HH:mm";
+    self.timeLbl.text = [formatter stringFromDate:date];
+}
+
 #pragma mark - dealloc
 
 - (void)dealloc {
-    [self removeNotifications];
     [self invalidTimer];
     [self invalidTimeTimer];
+    NSLog(@"%s", __func__);
 }
 
 @end

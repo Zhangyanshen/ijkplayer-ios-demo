@@ -9,6 +9,7 @@
 #import "YSPlayerController.h"
 #import "YSPlayerView.h"
 #import "Masonry.h"
+#import "SDWeakProxy.h"
 
 @interface YSPlayerController () <YSPlayerControlDelegate>
 
@@ -131,9 +132,13 @@
 - (void)resetTimer {
     [self invalidTimer];
     __weak typeof(self) weakSelf = self;
-    self.timer = [NSTimer timerWithTimeInterval:0.5 repeats:YES block:^(NSTimer * _Nonnull timer) {
-        [weakSelf.playerView.playControl setPlayTime:weakSelf.player.currentPlaybackTime totalTime:weakSelf.player.duration];
-    }];
+    if (@available(iOS 10.0, *)) {
+        self.timer = [NSTimer timerWithTimeInterval:0.5 repeats:YES block:^(NSTimer * _Nonnull timer) {
+            [weakSelf setPlayTimeAndTotalTime];
+        }];
+    } else {
+        self.timer = [NSTimer timerWithTimeInterval:0.5 target:[SDWeakProxy proxyWithTarget:self] selector:@selector(setPlayTimeAndTotalTime) userInfo:nil repeats:YES];
+    }
     [[NSRunLoop currentRunLoop] addTimer:self.timer forMode:NSRunLoopCommonModes];
 }
 
@@ -142,6 +147,12 @@
         [self.timer invalidate];
         self.timer = nil;
     }
+}
+
+// 设置播放时长和总时长
+- (void)setPlayTimeAndTotalTime {
+    [self.playerView.playControl setPlayTime:self.player.currentPlaybackTime
+                                   totalTime:self.player.duration];
 }
 
 - (void)addNotifications {

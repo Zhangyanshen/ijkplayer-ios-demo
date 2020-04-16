@@ -10,7 +10,9 @@
 
 @interface AppDelegate : UIResponder <UIApplicationDelegate>
 
-@property (assign, nonatomic) BOOL fullScreen;
+@property (strong, nonatomic) UIWindow * window;
+
+@property (assign, nonatomic) BOOL fullScreen; // 当前页面是否是全屏
 
 @end
 
